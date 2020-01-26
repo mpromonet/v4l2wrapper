@@ -9,16 +9,14 @@
 **
 ** -------------------------------------------------------------------------*/
 
-#include <string.h>
-
 // libv4l2
 #include <linux/videodev2.h>
 
 // project
 #include "logger.h"
 
-#include "V4l2Output.h"
 #include "V4l2MmapDevice.h"
+#include "V4l2Output.h"
 #include "V4l2ReadWriteDevice.h"
 
 // -----------------------------------------

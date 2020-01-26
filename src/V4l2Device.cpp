@@ -7,11 +7,11 @@
 ** 
 ** -------------------------------------------------------------------------*/
 
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
+#include <cerrno>
+#include <cstring>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 // libv4l2
 #include <linux/videodev2.h>
@@ -22,14 +22,14 @@
 
 std::string fourcc(unsigned int format)
 {
-	char formatArray[] = { (char)(format&0xff), (char)((format>>8)&0xff), (char)((format>>16)&0xff), (char)((format>>24)&0xff), 0 };
-	return std::string(formatArray, strlen(formatArray));
+	char formatArray[] = { static_cast<char>(format&0xff), static_cast<char>((format>>8)&0xff), static_cast<char>((format>>16)&0xff), static_cast<char>((format>>24)&0xff), 0 };
+	return std::string(formatArray, std::strlen(formatArray));
 }
 
 // -----------------------------------------
 //    V4L2Device
 // -----------------------------------------
-V4l2Device::V4l2Device(const V4L2DeviceParameters&  params, v4l2_buf_type deviceType) : m_params(params), m_fd(-1), m_deviceType(deviceType), m_bufferSize(0), m_format(0)
+V4l2Device::V4l2Device(const V4L2DeviceParameters&  params, v4l2_buf_type deviceType) : m_params(params), m_fd(-1), m_deviceType(deviceType), m_bufferSize(0), m_format(0), m_width(), m_height()
 {
 }
 
@@ -49,8 +49,7 @@ void V4l2Device::close()
 // query current format
 void V4l2Device::queryFormat()
 {
-	struct v4l2_format     fmt;
-	memset(&fmt,0,sizeof(fmt));
+	struct v4l2_format     fmt = {};
 	fmt.type  = m_deviceType;
 	if (0 == ioctl(m_fd,VIDIOC_G_FMT,&fmt)) 
 	{
@@ -114,8 +113,7 @@ int V4l2Device::initdevice(const char *dev_name, unsigned int mandatoryCapabilit
 // check needed V4L2 capabilities
 int V4l2Device::checkCapabilities(int fd, unsigned int mandatoryCapabilities)
 {
-	struct v4l2_capability cap;
-	memset(&(cap), 0, sizeof(cap));
+	struct v4l2_capability cap = {};
 	if (-1 == ioctl(fd, VIDIOC_QUERYCAP, &cap)) 
 	{
 		LOG(ERROR) << "Cannot get capabilities for device:" << m_params.m_devName << " " << strerror(errno);
@@ -154,7 +152,8 @@ int V4l2Device::configureFormat(int fd)
 	if (m_params.m_height != 0)  {
 		height= m_params.m_height;
 	}	
-	if  ( (m_params.m_formatList.size()==0) && (m_format != 0) )  {
+
+	if  ( m_params.m_formatList.empty() && (m_format != 0) )  {
 		m_params.m_formatList.push_back(m_format);
 	}
 
@@ -175,8 +174,7 @@ int V4l2Device::configureFormat(int fd)
 // configure capture format 
 int V4l2Device::configureFormat(int fd, unsigned int format, unsigned int width, unsigned int height)
 {
-	struct v4l2_format   fmt;			
-	memset(&(fmt), 0, sizeof(fmt));
+	struct v4l2_format   fmt = {};
 	fmt.type                = m_deviceType;
 	fmt.fmt.pix.width       = width;
 	fmt.fmt.pix.height      = height;
@@ -213,8 +211,7 @@ int V4l2Device::configureParam(int fd)
 {
 	if (m_params.m_fps!=0)
 	{
-		struct v4l2_streamparm   param;			
-		memset(&(param), 0, sizeof(param));
+		struct v4l2_streamparm   param = {};
 		param.type = m_deviceType;
 		param.parm.capture.timeperframe.numerator = 1;
 		param.parm.capture.timeperframe.denominator = m_params.m_fps;
